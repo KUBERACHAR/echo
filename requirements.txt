@@ -1,7 +1,7 @@
 streamlit
 opencv-python-headless
-deepface
-tensorflow
+tensorflow-cpu
+tf-keras
 mtcnn
 numpy
 plotly
