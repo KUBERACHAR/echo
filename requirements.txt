@@ -1,0 +1,10 @@
+streamlit
+opencv-python-headless
+deepface
+tensorflow
+mtcnn
+numpy
+plotly
+requests
+google-generativeai
+python-dotenv

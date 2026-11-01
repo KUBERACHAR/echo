@@ -1,0 +1,81 @@
+# =============================================================================
+# Git Ignore for MindCare (video-mood-stress)
+# =============================================================================
+
+# --- Environment Variables & Secrets ---
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# --- Virtual Environments ---
+myenv/
+myvenv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# --- Python Bytecode & Cache ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# --- Testing & Type Checking ---
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# --- Streamlit Cache & Secrets ---
+.streamlit/secrets.toml
+
+# --- Operating System Files ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+[Dd]esktop.ini
+
+# --- IDE & Editor Settings ---
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+
+# --- Logs & Temporary Outputs ---
+*.log
+output_*.jpg
+output_*.png
+temp/
+tmp/
+
