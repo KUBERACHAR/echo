@@ -222,7 +222,7 @@ curr_lang = st.session_state.selected_language
 # --- Header ---
 st.markdown(f"""
 <div class="main-header">
-    <h1>ECHO</h1>
+    <h1>ECHO AI</h1>
     <p>{get_text('header_subtitle', curr_lang)}</p>
 </div>
 """, unsafe_allow_html=True)

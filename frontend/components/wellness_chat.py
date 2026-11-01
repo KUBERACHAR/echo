@@ -1,7 +1,8 @@
 """
 frontend/components/wellness_chat.py
 Chat component for Personalized Mental Wellness Assistance.
-Supports dynamic multi-language interface and responses (English, Kannada, Hindi, Telugu).
+Supports dynamic multi-language interface, responses (English, Kannada, Hindi, Telugu),
+and a speaker button exclusively for responses freshly generated to user input questions.
 """
 
 import streamlit as st
@@ -13,12 +14,18 @@ from frontend.translations import (
     get_quick_prompts,
     get_welcome_message
 )
+from frontend.components.tts_speaker import render_tts_button
 
 def init_chat_session(language: str = "English"):
     """Ensure session state variables for chat are initialized with active language."""
     if "chat_messages" not in st.session_state:
         st.session_state.chat_messages = [
-            {"role": "assistant", "content": get_welcome_message(language)}
+            {
+                "role": "assistant",
+                "content": get_welcome_message(language),
+                "is_welcome": True,
+                "is_generated": False
+            }
         ]
         st.session_state.chat_language = language
 
@@ -34,13 +41,19 @@ def init_chat_session(language: str = "English"):
             and st.session_state.chat_messages[0].get("role") == "assistant"
         ):
             st.session_state.chat_messages = [
-                {"role": "assistant", "content": get_welcome_message(language)}
+                {
+                    "role": "assistant",
+                    "content": get_welcome_message(language),
+                    "is_welcome": True,
+                    "is_generated": False
+                }
             ]
 
 def render_wellness_chat(gemini_service: GeminiWellnessAssistant, language: str = "English"):
     """
     Renders the full interactive mental wellness chatbot UI.
-    Dynamically localized to the user-selected language.
+    Dynamically localized to the user-selected language with a speaker button
+    specifically for responses freshly generated to user input questions.
     """
     init_chat_session(language)
 
@@ -89,10 +102,28 @@ def render_wellness_chat(gemini_service: GeminiWellnessAssistant, language: str 
     # --- Chat Messages Container ---
     chat_container = st.container()
     with chat_container:
-        for msg in st.session_state.chat_messages:
+        for idx, msg in enumerate(st.session_state.chat_messages):
             avatar = "🌿" if msg["role"] == "assistant" else "👤"
             with st.chat_message(msg["role"], avatar=avatar):
                 st.markdown(msg["content"])
+                
+                # Check: Is this a response freshly generated to a user input question?
+                # The speaker symbol is displayed ONLY for freshly generated responses,
+                # NEVER on the existing sentence (the initial default welcome greeting).
+                has_user_prior = any(m.get("role") == "user" for m in st.session_state.chat_messages[:idx])
+                is_freshly_generated = (
+                    msg.get("role") == "assistant"
+                    and msg.get("is_generated", False)
+                    and not msg.get("is_welcome", False)
+                    and has_user_prior
+                )
+
+                if is_freshly_generated and msg.get("content"):
+                    render_tts_button(
+                        msg["content"],
+                        language=language,
+                        key=f"msg_tts_{idx}"
+                    )
 
     # --- Determine user input (from chat_input or quick chip) ---
     chat_input_val = st.chat_input(get_text("chat_input_placeholder", language))
@@ -123,9 +154,21 @@ def render_wellness_chat(gemini_service: GeminiWellnessAssistant, language: str 
                     language=language
                 )
                 st.markdown(response_text)
+                # Render speaker button immediately for the newly generated response
+                render_tts_button(
+                    response_text,
+                    language=language,
+                    key=f"msg_tts_new_{len(st.session_state.chat_messages)}"
+                )
 
-        # Append assistant message
-        st.session_state.chat_messages.append({"role": "assistant", "content": response_text})
+        # Append assistant message with is_generated=True and refresh chat container cleanly
+        st.session_state.chat_messages.append({
+            "role": "assistant",
+            "content": response_text,
+            "is_welcome": False,
+            "is_generated": True
+        })
+        st.rerun()
 
     # --- Utility Bar (Clear Chat) ---
     st.markdown("<br>", unsafe_allow_html=True)
@@ -133,6 +176,11 @@ def render_wellness_chat(gemini_service: GeminiWellnessAssistant, language: str 
     with util_col1:
         if st.button(get_text("clear_chat", language), key="clear_chat_btn", use_container_width=True):
             st.session_state.chat_messages = [
-                {"role": "assistant", "content": get_welcome_message(language)}
+                {
+                    "role": "assistant",
+                    "content": get_welcome_message(language),
+                    "is_welcome": True,
+                    "is_generated": False
+                }
             ]
             st.rerun()

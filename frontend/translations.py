@@ -78,6 +78,9 @@ TRANSLATIONS: Dict[str, Dict[str, any]] = {
         "chat_input_placeholder": "Share what's on your mind, or ask for wellness advice...",
         "spinner_text": "MindCare is reflecting on your message...",
         "clear_chat": "🗑️ Clear Chat",
+        "tts_listen": "Listen to response",
+        "tts_stop": "Stop",
+        "tts_tooltip": "Listen to freshly generated response",
         "welcome_message": (
             "**Welcome to MindCare Companion!**\n\n"
             "I am your **Personalized Mental Wellness Assistant**. "
@@ -148,9 +151,12 @@ TRANSLATIONS: Dict[str, Dict[str, any]] = {
         "chat_input_placeholder": "ನಿಮ್ಮ ಮನಸ್ಸಿನಲ್ಲಿರುವುದನ್ನು ಹಂಚಿಕೊಳ್ಳಿ, ಅಥವಾ ಕ್ಷೇಮ ಸಲಹೆ ಕೇಳಿ...",
         "spinner_text": "ಮೈಂಡ್‌ಕೇರ್ ನಿಮ್ಮ ಸಂದೇಶವನ್ನು ಪರಿಶೀಲಿಸುತ್ತಿದೆ...",
         "clear_chat": "🗑️ ಚಾಟ್ ಅಳಿಸಿ",
+        "tts_listen": "ಉತ್ತರವನ್ನು ಆಲಿಸಿ",
+        "tts_stop": "ನಿಲ್ಲಿಸಿ",
+        "tts_tooltip": "ಹೊಸದಾಗಿ ರಚಿಸಲಾದ ಉತ್ತರವನ್ನು ಆಲಿಸಿ",
         "welcome_message": (
             "**ಮೈಂಡ್‌ಕೇರ್ ಕಂಪ್ಯಾನಿಯನ್‌ಗೆ ಸುಸ್ವಾಗತ!**\n\n"
-            "ನಾನು ನಿಮ್ಮ **ವೈಯಕ್ತೀಕರಿಸಿದ ಮಾನಸಿಕ ಕ್ಷೇಮ ಸಹಾಯಕ**. "
+            "ನಾನು ನಿಮ್ಮ **ವೈಯಕ್ತಿಕ ಮಾನಸಿಕ ಕ್ಷೇಮ ಸಹಾಯಕ**. "
             "ನಿಮ್ಮ ಭಾವನೆಗಳನ್ನು ಅರ್ಥಮಾಡಿಕೊಳ್ಳಲು, ವಿಶ್ರಾಂತಿ ನೀಡುವ ಉಸಿರಾಟದ ವ್ಯಾಯಾಮಗಳನ್ನು ಅಭ್ಯಾಸ ಮಾಡಲು, ಕೆಲಸದ ಒತ್ತಡ ನಿವಾರಿಸಲು "
             "ಮತ್ತು ಸಮತೋಲಿತ ಮನಸ್ಥಿತಿಯನ್ನು ಕಾಪಾಡಿಕೊಳ್ಳಲು ನಾನು ಸಹಾಯ ಮಾಡುತ್ತೇನೆ.\n\n"
             "*ಸಲಹೆ: ನೀವು ವೆಬ್‌ಕ್ಯಾಮ್ ಡಿಟೆಕ್ಟರ್ ಬಳಸಿದಂತೆ, ಪತ್ತೆಯಾದ ಭಾವನೆ ಮತ್ತು ಒತ್ತಡದ ಮಟ್ಟಕ್ಕೆ ತಕ್ಕಂತೆ ನನ್ನ ಮಾರ್ಗದರ್ಶನವನ್ನು ಹೊಂದಿಸಿಕೊಳ್ಳುತ್ತೇನೆ.*"
@@ -218,6 +224,9 @@ TRANSLATIONS: Dict[str, Dict[str, any]] = {
         "chat_input_placeholder": "अपने मन की बात साझा करें, या स्वास्थ्य संबंधी सलाह लें...",
         "spinner_text": "माइंडकेयर आपके संदेश पर विचार कर रहा है...",
         "clear_chat": "🗑️ चैट साफ़ करें",
+        "tts_listen": "उत्तर सुनें",
+        "tts_stop": "रोकें",
+        "tts_tooltip": "नए उत्पन्न उत्तर को सुनें",
         "welcome_message": (
             "**माइंडकेयर कंपैनियन में आपका स्वागत है!**\n\n"
             "मैं आपका **व्यक्तिगत मानसिक स्वास्थ्य सहायक** हूँ। "
@@ -288,10 +297,13 @@ TRANSLATIONS: Dict[str, Dict[str, any]] = {
         "chat_input_placeholder": "మీ మనస్సులోని ఆలోచనలను పంచుకోండి, లేదా శ్రేయస్సు సలహా అడగండి...",
         "spinner_text": "మైండ్‌కేర్ మీ సందేశాన్ని పరిశీలిస్తోంది...",
         "clear_chat": "🗑️ చాట్ క్లియర్ చేయండి",
+        "tts_listen": "సమాధానం వినండి",
+        "tts_stop": "ఆపండి",
+        "tts_tooltip": "కొత్తగా రూపొందించిన సమాధానాన్ని వినండి",
         "welcome_message": (
             "**మైండ్‌కేర్ కంపానియన్‌కి స్వాగతం!**\n\n"
             "నేను మీ **వ్యక్తిగతీకరించిన మానసిక శ్రేయస్సు సహాయకుడిని**. "
-            "మీ భావోద్వేగాలను అర్థం చేసుకోవడంలో, విశ్రాంతి శ్వాస వ్యాయామాలను అభ్యసించడంలో, పని ఒత్తిడిని తగ్గించడంలో "
+            "మీ భావోద్వేగాలను అర్థం చేసుకోవడంలో, విశ్రాంతి శ్వాస వ్యాయామాలను అభ్యసించడంలో, పని ఒత్తిడిని తగ్గించుకోవడంలో "
             "మరియు సమతుల్య మానసిక స్థితిని కాపాడుకోవడంలో నేను మీకు సహాయపడగలను.\n\n"
             "*చిట్కా: మీరు వెబ్‌క్యామ్ డిటెక్టర్‌ని ఉపయోగించినప్పుడు, గుర్తించిన భావోద్వేగం మరియు ఒత్తిడి స్థాయికి అనుగుణంగా నా మార్గదర్శకత్వాన్ని అందిస్తాను.*"
         ),
@@ -320,4 +332,3 @@ def get_quick_prompts(lang: str = "English") -> List[Tuple[str, str]]:
 def get_welcome_message(lang: str = "English") -> str:
     """Get translated welcome message."""
     return get_text("welcome_message", lang, TRANSLATIONS["English"]["welcome_message"])
-

@@ -13,6 +13,7 @@ The application captures webcam video to detect faces, recognizes 7 core emotion
 - **Personalized Mental Wellness Chatbot (Gemini LLM):**
   - Empathetic AI wellness companion ("MindCare Companion") powered by Google Gemini (`gemini-3.5-flash-lite`, `gemini-3.8-flash`).
   - **Dynamic Emotional Context Sync:** Adapts responses based on real-time detected facial emotion, stress levels, and confidence telemetry.
+  - **Audio Text-to-Speech (TTS) Speaker:** Interactive speaker symbol (🔊) on chatbot responses allowing users to listen to spoken guidance in the selected language (English, Kannada, Hindi, Telugu).
   - Interactive quick-wellness prompts (e.g., Box Breathing, Stress Relief, Affirmations, Desk Stretches).
   - Conversation history clearing.
 - **Multi-Language Support (Dynamic UI & Chatbot):**
