@@ -15,6 +15,10 @@ The application captures webcam video to detect faces, recognizes 7 core emotion
   - **Dynamic Emotional Context Sync:** Adapts responses based on real-time detected facial emotion, stress levels, and confidence telemetry.
   - Interactive quick-wellness prompts (e.g., Box Breathing, Stress Relief, Affirmations, Desk Stretches).
   - Conversation history clearing.
+- **Multi-Language Support (Dynamic UI & Chatbot):**
+  - Instant one-click language selection buttons for **English (default)**, **Kannada (ಕನ್ನಡ)**, **Hindi (हिन्दी)**, and **Telugu (తెలుగు)**.
+  - Dynamically localizes all interface elements: headers, tabs, camera controls, live telemetry cards, charts, and quick wellness starters.
+  - Generates culturally empathetic and linguistically accurate chatbot responses in the chosen language.
 - **Interactive Streamlit Dashboard:** Modern, calming wellness UI with multi-tab layout and Plotly emotion probability distributions.
 
 ---
@@ -61,14 +65,14 @@ VIDEO-MOOD-STRESS/
 1. **Clone the repository:**
    ```bash
    git clone <REPO_URL>
-   cd video-mood-stress
+   cd echo
    ```
 
 2. **Create and activate a virtual environment:**
    - **Windows:**
      ```powershell
      python -m venv myenv
-     .\myenv\Scripts\activate
+     .\myenv\Scripts\Activate.ps1
      ```
    - **Linux / macOS:**
      ```bash

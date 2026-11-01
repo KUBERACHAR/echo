@@ -4,7 +4,8 @@ Gemini LLM Service for Personalized Mental Wellness Assistance.
 
 Integrates Google Gemini to deliver empathetic, evidence-informed,
 personalized wellness guidance adapted to the user's real-time detected
-facial emotions, stress scores, and conversational context.
+facial emotions, stress scores, and conversational context in multiple
+languages (English, Kannada, Hindi, Telugu).
 """
 
 import os
@@ -131,20 +132,47 @@ class GeminiWellnessAssistant:
         user_message: str,
         chat_history: Optional[List[Dict[str, str]]] = None,
         emotion_context: Optional[Dict[str, any]] = None,
+        language: str = "English",
     ) -> str:
         """
         Generate personalized mental wellness response using Gemini API with auto-fallback.
+        Supports multi-language outputs (English, Kannada, Hindi, Telugu).
         """
         if not self.is_configured():
-            return self._generate_fallback_response(user_message, emotion_context)
+            return self._generate_fallback_response(user_message, emotion_context, language)
+
+        # Build language-specific guidance
+        language_instructions = {
+            "English": "Respond entirely in English. Maintain an empathetic, warm, and comforting tone.",
+            "Kannada": (
+                "You MUST respond ENTIRELY in natural, grammatically correct, polite Kannada using Kannada script (ಕನ್ನಡ ಲಿಪಿಯಲ್ಲಿ ಉತ್ತರಿಸಿ). "
+                "Do not use Latin/English script for your sentences. Maintain deep warmth, empathy, and cultural respect."
+            ),
+            "Hindi": (
+                "You MUST respond ENTIRELY in natural, polite Hindi using Devanagari script (हिन्दी / देवनागरी लिपि में उत्तर दें). "
+                "Do not use Romanized Hinglish. Maintain deep warmth, empathy, and comfort."
+            ),
+            "Telugu": (
+                "You MUST respond ENTIRELY in natural, polite Telugu using Telugu script (తెలుగు లిపిలో సమాధానం ఇవ్వండి). "
+                "Do not use Latin/English script for your sentences. Maintain warmth, encouragement, and empathetic care."
+            )
+        }
+        lang_instruction = language_instructions.get(language, f"Respond in {language}.")
+        full_system_prompt = (
+            f"{SYSTEM_PROMPT}\n\n"
+            f"CRITICAL LANGUAGE INSTRUCTION:\n"
+            f"- User Selected Language: **{language}**\n"
+            f"- {lang_instruction}\n"
+            f"- All reflections, breathing exercises, affirmations, and suggestions MUST be in {language}."
+        )
 
         # Prepare payload for Gemini API
-        contents = self._prepare_contents(user_message, chat_history, emotion_context)
+        contents = self._prepare_contents(user_message, chat_history, emotion_context, language)
         
         payload = {
             "contents": contents,
             "systemInstruction": {
-                "parts": [{"text": SYSTEM_PROMPT}]
+                "parts": [{"text": full_system_prompt}]
             },
             "generationConfig": {
                 "temperature": self.temperature,
@@ -178,7 +206,7 @@ class GeminiWellnessAssistant:
                         if alt_contents and alt_contents[0]["role"] == "user":
                             alt_contents[0] = {
                                 "role": "user",
-                                "parts": [{"text": f"[System Instruction: {SYSTEM_PROMPT}]\n\n" + alt_contents[0]["parts"][0]["text"]}]
+                                "parts": [{"text": f"[System Instruction: {full_system_prompt}]\n\n" + alt_contents[0]["parts"][0]["text"]}]
                             }
                         alt_payload["contents"] = alt_contents
                         response = requests.post(url, headers={"Content-Type": "application/json"}, data=json.dumps(alt_payload), timeout=25)
@@ -191,7 +219,13 @@ class GeminiWellnessAssistant:
                         parts = candidates[0].get("content", {}).get("parts", [])
                         if parts and "text" in parts[0]:
                             return parts[0]["text"].strip()
-                    return "I'm listening, but I couldn't formulate a response right now. How else can I support your wellness?"
+                    fallback_msgs = {
+                        "Kannada": "ನಾನು ನಿಮ್ಮ ಮಾತನ್ನು ಕೇಳುತ್ತಿದ್ದೇನೆ, ಆದರೆ ಈ ಕ್ಷಣದಲ್ಲಿ ಉತ್ತರವನ್ನು ರಚಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ನಿಮ್ಮ ಕ್ಷೇಮಕ್ಕೆ ನಾನು ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?",
+                        "Hindi": "मैं आपकी बात सुन रहा हूँ, लेकिन अभी उत्तर तैयार नहीं कर सका। मैं आपकी कैसे मदद कर सकता हूँ?",
+                        "Telugu": "నేను వింటున్నాను, కానీ ప్రస్తుతానికి సమాధానం సిద్ధం చేయలేకపోయాను. నేను మీకు ఎలా సహాయపడగలను?",
+                        "English": "I'm listening, but I couldn't formulate a response right now. How else can I support your wellness?"
+                    }
+                    return fallback_msgs.get(language, fallback_msgs["English"])
 
                 # If 404 (model deprecated/not found) or 503 (model overloaded), try next model
                 if response.status_code in [404, 503]:
@@ -222,7 +256,8 @@ class GeminiWellnessAssistant:
         self,
         latest_message: str,
         chat_history: Optional[List[Dict[str, str]]],
-        emotion_context: Optional[Dict[str, any]]
+        emotion_context: Optional[Dict[str, any]],
+        language: str = "English",
     ) -> List[Dict]:
         """Format chat history into alternating user/model turns for Gemini."""
         contents = []
@@ -240,12 +275,12 @@ class GeminiWellnessAssistant:
                     contents.append({"role": role, "parts": [{"text": text}]})
 
         # Inject real-time emotional telemetry into current turn
-        context_prefix = ""
+        context_prefix = f"[User Language Preference: {language}]\n"
         if emotion_context and emotion_context.get("emotion") and emotion_context.get("emotion") != "None":
             emotion = emotion_context.get("emotion", "Unknown").capitalize()
             stress = emotion_context.get("stress", "Unknown")
             conf = emotion_context.get("confidence", 0)
-            context_prefix = (
+            context_prefix += (
                 f"[Real-Time Wellness Context: Facial Emotion = {emotion}, "
                 f"Estimated Stress Level = {stress}, Model Confidence = {conf}%]\n\n"
             )
@@ -267,42 +302,132 @@ class GeminiWellnessAssistant:
     def _generate_fallback_response(
         self,
         user_message: str,
-        emotion_context: Optional[Dict[str, any]]
+        emotion_context: Optional[Dict[str, any]],
+        language: str = "English",
     ) -> str:
         """
         Graceful response when Gemini API key is not yet configured.
-        Provides immediate wellness support and guides user on setting the key.
+        Provides immediate wellness support and guides user on setting the key in selected language.
         """
         emotion = (emotion_context.get("emotion", "") if emotion_context else "").lower()
         stress = (emotion_context.get("stress", "") if emotion_context else "").lower()
 
-        wellness_tip = ""
-        if "high" in stress or emotion in ["angry", "fear", "sad"]:
-            wellness_tip = (
-                "🌿 **Immediate Stress Relief:**\n"
-                "• **Box Breathing:** Inhale for 4 seconds, hold for 4, exhale for 4, hold for 4. Repeat 3 times.\n"
-                "• **Grounding:** Notice 5 things you can see around you right now, 4 things you can touch, and 3 sounds you hear.\n"
-                "• **Posture:** Gently roll your shoulders back and unclench your jaw.\n\n"
-            )
-        elif emotion in ["happy", "surprise"]:
-            wellness_tip = (
-                "✨ **Savoring the Moment:**\n"
-                "• Take a moment to acknowledge the positive energy you're feeling right now.\n"
-                "• What is one thing you feel grateful for today?\n\n"
-            )
-        else:
-            wellness_tip = (
-                "🧘 **Mindful Reset:**\n"
-                "• Sit comfortably and take a deep, slow breath.\n"
-                "• Release any tension in your forehead, neck, and shoulders.\n\n"
+        is_high = "high" in stress or emotion in ["angry", "fear", "sad"]
+        is_happy = emotion in ["happy", "surprise"]
+
+        if language == "Kannada":
+            if is_high:
+                tip = (
+                    "🌿 **ತಕ್ಷಣದ ಒತ್ತಡ ಪರಿಹಾರ ವ್ಯಾಯಾಮಗಳು:**\n"
+                    "• **ಬಾಕ್ಸ್ ಬ್ರೀತಿಂಗ್ (ಉಸಿರಾಟ):** 4 ಸೆಕೆಂಡುಗಳ ಕಾಲ ಉಸಿರನ್ನು ಒಳಗೆ ತೆಗೆದುಕೊಳ್ಳಿ, 4 ಸೆಕೆಂಡುಗಳ ಕಾಲ ಹಿಡಿದುಕೊಳ್ಳಿ, 4 ಸೆಕೆಂಡುಗಳಲ್ಲಿ ಹೊರಬಿಡಿ, 4 ಸೆಕೆಂಡು ಕಾಯಿರಿ. ಇದನ್ನು 3 ಬಾರಿ ಪುನರಾವರ್ತಿಸಿ.\n"
+                    "• **ನೆಲಸುವಿಕೆ (ಗ್ರೌಂಡಿಂಗ್):** ನಿಮ್ಮ ಸುತ್ತಲೂ ಕಾಣುವ 5 ವಸ್ತುಗಳು, ಸ್ಪರ್ಶಿಸಬಹುದಾದ 4 ವಸ್ತುಗಳು ಮತ್ತು ಕೇಳುವ 3 ಧ್ವನಿಗಳನ್ನು ಗಮನಿಸಿ.\n"
+                    "• **ಭಂಗಿ (Posture):** ನಿಮ್ಮ ಭುಜಗಳನ್ನು ಸಡಿಲಗೊಳಿಸಿ ಮತ್ತು ದವಡೆಯ ಒತ್ತಡವನ್ನು ಸಡಿಲಗೊಳಿಸಿ.\n\n"
+                )
+            elif is_happy:
+                tip = (
+                    "✨ **ಈ ಕ್ಷಣವನ್ನು ಆನಂದಿಸಿ:**\n"
+                    "• ನೀವು ಪ್ರಸ್ತುತ ಅನುಭವಿಸುತ್ತಿರುವ ಸಕಾರಾತ್ಮಕ ಶಕ್ತಿಯನ್ನು ಪ್ರಶಂಸಿಸಲು ಒಂದು ಕ್ಷಣ ತೆಗೆದುಕೊಳ್ಳಿ.\n"
+                    "• ಇಂದಿನ ದಿನದಲ್ಲಿ ನೀವು ಕೃತಜ್ಞರಾಗಿರುವ ಒಂದು ವಿಷಯ ಯಾವುದು?\n\n"
+                )
+            else:
+                tip = (
+                    "🧘 **ಮನಸ್ಸಿನ ಶಾಂತಿ:**\n"
+                    "• ಆರಾಮವಾಗಿ ಕುಳಿತು ಆಳವಾದ, ನಿಧಾನವಾದ ಉಸಿರನ್ನು ತೆಗೆದುಕೊಳ್ಳಿ.\n"
+                    "• ಕುತ್ತಿಗೆ, ಭುಜ ಮತ್ತು ಹಣೆಯ ಮೇಲಿನ ಎಲ್ಲಾ ಒತ್ತಡವನ್ನು ಮುಕ್ತಗೊಳಿಸಿ.\n\n"
+                )
+            return (
+                f"ನಮಸ್ಕಾರ! ನಾನು ನಿಮ್ಮ **ವೈಯಕ್ತಿಕ ಮಾನಸಿಕ ಕ್ಷೇಮ ಸಹಾಯಕ**.\n\n"
+                f"{tip}"
+                f"ನಿಮ್ಮ ಮಾನಸಿಕ ಆರೋಗ್ಯ, ಒತ್ತಡ ನಿರ್ವಹಣೆ ಮತ್ತು ದೈನಂದಿನ ಯೋಗಕ್ಷೇಮಕ್ಕೆ ಬೆಂಬಲ ನೀಡಲು ನಾನಿದ್ದೇನೆ. "
+                f"ನಿಮ್ಮ ಮನಸ್ಸಿನಲ್ಲಿರುವುದನ್ನು ಹಂಚಿಕೊಳ್ಳಿ ಅಥವಾ ಮೇಲಿನ ತ್ವರಿತ ಕ್ಷೇಮ ವ್ಯಾಯಾಮಗಳಲ್ಲಿ ಒಂದನ್ನು ಆರಿಸಿ!\n\n"
+                f"---\n"
+                f"*(ಡೆವಲಪರ್ ಸೂಚನೆ: Google Gemini ಯಿಂದ ನೇರ AI ಪ್ರತಿಕ್ರಿಯೆಗಳನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಲು, ದಯವಿಟ್ಟು `config.py` ಅಥವಾ `.env` ನಲ್ಲಿ ನಿಮ್ಮ `GEMINI_API_KEY` ಅನ್ನು ನಮೂದಿಸಿ)*"
             )
 
-        return (
-            f"Hello! I am your **Personalized Mental Wellness Assistant**.\n\n"
-            f"{wellness_tip}"
-            f"I am here to support your mental health, stress management, and daily well-being. "
-            f"Feel free to share what's on your mind or choose one of the quick wellness exercises above!\n\n"
-            f"---\n"
-            f"*(Developer notice: To enable live generative responses from Google Gemini, please define your `GEMINI_API_KEY` in `config.py` or `.env`)*"
-        )
+        elif language == "Hindi":
+            if is_high:
+                tip = (
+                    "🌿 **तत्काल तनाव राहत अभ्यास:**\n"
+                    "• **बॉक्स ब्रीदिंग:** 4 सेकंड सांस अंदर लें, 4 सेकंड रोकें, 4 सेकंड में सांस छोड़ें, 4 सेकंड रुकें। इसे 3 बार दोहराएं।\n"
+                    "• **ग्राउंडिंग:** अपने आस-पास दिखने वाली 5 चीजें, 4 चीजें जिन्हें आप छू सकते हैं, और 3 आवाजें जो आप सुन सकते हैं, उन पर ध्यान दें।\n"
+                    "• **मुद्रा:** अपने कंधों को ढीला करें और जबड़े के तनाव को छोड़ें।\n\n"
+                )
+            elif is_happy:
+                tip = (
+                    "✨ **सकारात्मक पल को संजोएं:**\n"
+                    "• इस समय आप जो सकारात्मक ऊर्जा महसूस कर रहे हैं, उसे महसूस करने के लिए एक क्षण निकालें।\n"
+                    "• आज ऐसी कौन सी बात है जिसके लिए आप आभारी हैं?\n\n"
+                )
+            else:
+                tip = (
+                    "🧘 **माइंडफुल रीसेट:**\n"
+                    "• आराम से बैठें और एक गहरी, धीमी सांस लें।\n"
+                    "• अपने माथे, गर्दन और कंधों के तनाव को पूरी तरह छोड़ दें।\n\n"
+                )
+            return (
+                f"नमस्ते! मैं आपका **व्यक्तिगत मानसिक स्वास्थ्य सहायक** हूँ।\n\n"
+                f"{tip}"
+                f"मैं आपके मानसिक स्वास्थ्य, तनाव प्रबंधन और दैनिक कल्याण का समर्थन करने के लिए यहाँ हूँ। "
+                f"बेझिझक अपने विचार साझा करें या ऊपर दिए गए त्वरित अभ्यासों में से एक चुनें!\n\n"
+                f"---\n"
+                f"*(डेवलपर सूचना: Google Gemini से लाइव प्रतिक्रियाएं सक्षम करने के लिए, कृपया `config.py` या `.env` में अपनी `GEMINI_API_KEY` दर्ज करें)*"
+            )
 
+        elif language == "Telugu":
+            if is_high:
+                tip = (
+                    "🌿 **తక్షణ ఒత్తిడి ఉపశమన వ్యాయామాలు:**\n"
+                    "• **బాక్స్ బ్రీతింగ్:** 4 సెకన్ల పాటు శ్వాస తీసుకోండి, 4 సెకన్లు ఆపండి, 4 సెకన్లలో వదలండి, 4 సెకన్లు ఆగండి. దీన్ని 3 సార్లు పునరావృతం చేయండి.\n"
+                    "• **గ్రౌండింగ్:** మీ చుట్టూ కనిపించే 5 విషయాలు, మీరు తాకగల 4 విషయాలు, మీరు వినగల 3 శబ్దాలను గమనించండి.\n"
+                    "• **భంగిమ:** మీ భుజాలను రిలాక్స్ చేయండి మరియు దవడ ఒత్తిడిని తగ్గించండి.\n\n"
+                )
+            elif is_happy:
+                tip = (
+                    "✨ **ఈ క్షణాన్ని ఆస్వాదించండి:**\n"
+                    "• మీరు ప్రస్తుతం అనుభవిస్తున్న సానుకూల శక్తిని గుర్తించడానికి ఒక క్షణం తీసుకోండి.\n"
+                    "• ఈ రోజు మీరు కృతజ్ఞతగా భావించే ఒక విషయం ఏమిటి?\n\n"
+                )
+            else:
+                tip = (
+                    "🧘 **మనస్సు ప్రశాంతత:**\n"
+                    "• సౌకర్యవంతంగా కూర్చుని లోతైన, నెమ్మదిగా శ్వాస తీసుకోండి.\n"
+                    "• నుదిటి, మెడ మరియు భుజాల వద్ద ఉన్న ఒత్తిడిని విడుదల చేయండి.\n\n"
+                )
+            return (
+                f"నమస్కారం! నేను మీ **వ్యక్తిగతీకరించిన మానసిక శ్రేయస్సు సహాయకుడిని**.\n\n"
+                f"{tip}"
+                f"మీ మానసిక ఆరోగ్యం, ఒత్తిడి నిర్వహణ మరియు శ్రేయస్సుకు మద్దతు ఇవ్వడానికి నేను ఇక్కడ ఉన్నాను. "
+                f"మీ మనస్సులోని విషయాలను నిస్సంకోచంగా పంచుకోండి లేదా పైన పేర్కొన్న శీఘ్ర వ్యాయామాలలో ఒకదాన్ని ఎంచుకోండి!\n\n"
+                f"---\n"
+                f"*(డెవలపర్ నోటీసు: Google Gemini ప్రత్యక్ష ప్రతిస్పందనలను ప్రారంభించడానికి, దయచేసి `config.py` లేదా `.env` లో మీ `GEMINI_API_KEY` ని నమోదు చేయండి)*"
+            )
+
+        else:  # English
+            if is_high:
+                wellness_tip = (
+                    "🌿 **Immediate Stress Relief:**\n"
+                    "• **Box Breathing:** Inhale for 4 seconds, hold for 4, exhale for 4, hold for 4. Repeat 3 times.\n"
+                    "• **Grounding:** Notice 5 things you can see around you right now, 4 things you can touch, and 3 sounds you hear.\n"
+                    "• **Posture:** Gently roll your shoulders back and unclench your jaw.\n\n"
+                )
+            elif is_happy:
+                wellness_tip = (
+                    "✨ **Savoring the Moment:**\n"
+                    "• Take a moment to acknowledge the positive energy you're feeling right now.\n"
+                    "• What is one thing you feel grateful for today?\n\n"
+                )
+            else:
+                wellness_tip = (
+                    "🧘 **Mindful Reset:**\n"
+                    "• Sit comfortably and take a deep, slow breath.\n"
+                    "• Release any tension in your forehead, neck, and shoulders.\n\n"
+                )
+
+            return (
+                f"Hello! I am your **Personalized Mental Wellness Assistant**.\n\n"
+                f"{wellness_tip}"
+                f"I am here to support your mental health, stress management, and daily well-being. "
+                f"Feel free to share what's on your mind or choose one of the quick wellness exercises above!\n\n"
+                f"---\n"
+                f"*(Developer notice: To enable live generative responses from Google Gemini, please define your `GEMINI_API_KEY` in `config.py` or `.env`)*"
+            )
