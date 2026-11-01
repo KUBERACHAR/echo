@@ -3,7 +3,7 @@ opencv-python-headless
 tensorflow-cpu
 tf-keras
 mtcnn
-numpy
+numpy<2.0.0
 plotly
 requests
 google-generativeai
